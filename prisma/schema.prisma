@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Users{
+  id Int @id @default(autoincrement())
+  email String @unique
+  isActive Boolean
+  expiresAt DateTime @default(now())
+  deviceId String @unique
+  createdAt DateTime @default(now())
+  favAnime Favorites[]
+}
+
+
+
+model Animes{
+  id Int @id @default(autoincrement())
+  title String 
+  link String @unique
+  img String? 
+  type String?
+  sinopsis String? @db.Text
+  genres String? @db.Text
+  score Float?
+  year Int?
+  status String?
+  broadcast String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  episodes Int?
+  totalEpisodes Episode[]
+  favAnime Favorites[]
+}
+
+model Episode{
+  id Int @id @default(autoincrement())
+  number Int 
+  videoToken String?
+  animeId Int
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+  anime Animes @relation(fields: [animeId], references: [id])
+ 
+
+  @@unique([number, animeId])
+}
+
+model Favorites{
+  id Int @id @default(autoincrement())
+  animeId Int
+  favAnime Animes @relation(fields: [animeId], references: [id])
+  user Users @relation(fields: [userId], references: [id])
+  userId Int
+  @@unique([userId, animeId])
+}

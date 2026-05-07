@@ -1,0 +1,33 @@
+# Dependencias
+node_modules/
+jspm_packages/
+
+# Configuración y Secretos (¡Súper importante para tu seguridad!)
+.env
+.env.local
+.env.*.local
+
+# Salida de compilación (TypeScript/TSX)
+dist/
+build/
+out/
+
+# Prisma
+/prisma/migrations
+# Si usas SQLite local para pruebas, ignora el archivo db
+*.db
+*.db-journal
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Carpeta de Puppeteer (si descarga el browser localmente)
+.cache/
+/generated/prisma
