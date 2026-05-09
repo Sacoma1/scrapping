@@ -1,26 +1,20 @@
 import { JikanAnime, ScrappedMissingAnimeEpisodes } from "../../interfaces.js";
 import { prisma } from "../../prisma/db.js";
-
 import { apiData } from "../services/jikanService.js";
 import { animeClearedUrl } from "../utils/clearLink.js";
 import { findEpisodes } from "../utils/missingEpisodes.js";
 
-//funcion complementaria a index.ts, esta funcion sirve para crear, actualizar animes nuevos o actualizar los ya existentes
-
 export const animeToDb = async (animeArray: JikanAnime[]) => {
   let index = 0;
 
-  //Recorremos el array entregado en la funcion para poder acceder a los objetos y sus propiedades
-
   for (let anime of animeArray) {
     index++;
-    //limpiamos el url antes de pasarlo a la db
     const clearedUrl = animeClearedUrl(anime.link);
-    //verificamos si el anime ya existe dentro de la db
+
     const verifyAnime = await prisma.animes.findUnique({
       where: { link: clearedUrl },
     });
-    //si el anime existe y tiene data los skippeamos
+
     if (verifyAnime?.episodes && verifyAnime.episodes > 0) {
       continue;
     }
@@ -36,17 +30,36 @@ export const animeToDb = async (animeArray: JikanAnime[]) => {
       ) {
         const animeTitle = await apiData(clearedUrl);
 
-        const updatedData = { ...anime, ...animeTitle };
+        const isMatch =
+          animeTitle.title.toLowerCase().includes(anime.title.toLowerCase()) ||
+          anime.title.toLowerCase().includes(animeTitle.title.toLowerCase());
+
+        let updatedData;
+        if (isMatch) {
+          updatedData = { ...anime, ...animeTitle };
+          genres: animeTitle.genres;
+          broadcast: animeTitle.broadcast;
+        } else {
+          console.log(
+            ` Discordancia: API dice "${animeTitle.title}" pero buscamos "${anime.title}"`,
+          );
+          updatedData = {
+            ...anime,
+            episodes: 0,
+            genres: "",
+            broadcast: "",
+            status: anime.status || "N/A",
+            year: anime.year || "N/A",
+            score: anime.score || null,
+          };
+        }
+
         const upsertData = await prisma.animes.upsert({
-          where: {
-            link: clearedUrl,
-          },
+          where: { link: clearedUrl },
           update: {
-            link: clearedUrl,
-            status: updatedData.status,
+            status: updatedData.status || null,
             score: updatedData.score ?? null,
-            episodes: updatedData.episodes,
-            genres: updatedData.genres,
+            episodes: updatedData.episodes || 0,
           },
           create: {
             title: anime.title,
@@ -54,10 +67,11 @@ export const animeToDb = async (animeArray: JikanAnime[]) => {
             status: updatedData.status,
             year: updatedData.year ? Number(updatedData.year) : null,
             score: updatedData.score ?? null,
-            broadcast: updatedData.broadcast ?? "",
+            broadcast: updatedData.broadcast || "",
             img: anime.img ?? "",
             sinopsis: anime.sinopsis,
             type: anime.type,
+            episodes: updatedData.episodes || 0,
           },
         });
 
@@ -67,7 +81,7 @@ export const animeToDb = async (animeArray: JikanAnime[]) => {
           );
 
           const animeArray = Array.from(
-            { length: updatedData.episodes },
+            { length: upsertData.episodes },
             (_, i) => ({
               number: i + 1,
               animeId: upsertData.id,
@@ -78,14 +92,10 @@ export const animeToDb = async (animeArray: JikanAnime[]) => {
             skipDuplicates: true,
           });
         }
-
-        console.log(`Anime agregado exitosamente ${index}: ${anime.title}`);
+        console.log(`Anime procesado ${index}: ${anime.title}`);
       }
     } catch (e: any) {
-      console.error(
-        `No se puede agregar anime ${index}: ${anime.title}`,
-        e.message || e,
-      );
+      console.error(`Error en anime ${index}: ${anime.title}`, e.message || e);
       continue;
     }
 
@@ -93,43 +103,45 @@ export const animeToDb = async (animeArray: JikanAnime[]) => {
     await new Promise((r) => setTimeout(r, delay));
   }
 
+  // --- SEGUNDA FASE: SCRAPEO MANUAL ---
   const missingEpisode = await prisma.animes.findMany({
     where: { episodes: 0 },
   });
 
-  const animeEpisodes: ScrappedMissingAnimeEpisodes[] =
-    await findEpisodes(missingEpisode);
-
-  for (let anime of animeEpisodes) {
+  if (missingEpisode.length > 0) {
     console.log(
-      `Agregando episodios para: ${anime.title}, se crearon ${anime.episodes} episodios`,
+      `Procesando ${missingEpisode.length} animes con scrapeo manual...`,
     );
-    const updateEpisodes = await prisma.animes.update({
-      where: { link: anime.link },
-      data: {
-        episodes: anime.episodes,
-      },
-    });
+    const animeEpisodes: ScrappedMissingAnimeEpisodes[] =
+      await findEpisodes(missingEpisode);
 
-    if (updateEpisodes.episodes && updateEpisodes.episodes > 0) {
+    for (let anime of animeEpisodes) {
       console.log(
-        `Creando ${updateEpisodes.episodes} episodios para: ${updateEpisodes.title}`,
+        `Actualizando ${anime.title}: ${anime.episodes} episodios detectados.`,
       );
 
-      const udpatedanimeArray = Array.from(
-        { length: updateEpisodes.episodes },
-        (_, i) => ({
-          number: i + 1,
-          animeId: updateEpisodes.id,
-        }),
-      );
-      const result = await prisma.episode.createMany({
-        data: udpatedanimeArray,
-        skipDuplicates: true,
+      const updateEpisodes = await prisma.animes.update({
+        where: { link: anime.link },
+        data: { episodes: anime.episodes },
       });
-      console.log(
-        `Resultado de creación: ${result.count} episodios insertados.`,
-      );
+
+      if (updateEpisodes.episodes && updateEpisodes.episodes > 0) {
+        const updatedAnimeArray = Array.from(
+          { length: updateEpisodes.episodes },
+          (_, i) => ({
+            number: i + 1,
+            animeId: updateEpisodes.id,
+          }),
+        );
+
+        const result = await prisma.episode.createMany({
+          data: updatedAnimeArray,
+          skipDuplicates: true,
+        });
+        console.log(
+          `Insertados ${result.count} episodios para ${updateEpisodes.title}`,
+        );
+      }
     }
   }
 };

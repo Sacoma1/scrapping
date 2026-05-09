@@ -18,7 +18,7 @@ export interface JikanAnime {
   link?: string;
   sinopsis: string;
   type: string;
-  episodes?: number;
+  episodes?: number | null;
 }
 
 export interface JikanResponse {
@@ -57,11 +57,31 @@ export interface ScrappedMissingAnimeEpisodes {
   title: string;
   link: string;
   episodes: number | null;
-  id: number | 0;
+  id?: number | 0;
 }
 
 export interface UpdateAnime {
   id: number;
+  episodes: number;
+  title: string;
+}
+
+export interface AnimeDataProcessed {
+  title: string;
+  genres: string; // Ya es un string
+  status: string;
+  year: number | string;
+  score: number | null;
+  broadcast: string; // Ya es un string
+  episodes: number;
+}
+
+export interface ProcessedData {
+  genres: string;
+  status: string;
+  year: number | string;
+  score: number | null;
+  broadcast: string;
   episodes: number;
   title: string;
 }

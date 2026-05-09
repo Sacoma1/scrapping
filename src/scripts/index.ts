@@ -23,45 +23,39 @@ export async function openWebPage(): Promise<void> {
   const pages = 4;
   const animesData: any[] = [];
 
-  for (let i = 1; i <= pages; i++) {
-    console.log(`procesando pagina ${i}`);
-    try {
-      await page.goto(
-        `https://animeav1.com/catalogo?status=emision&page=${i}`,
-        {
-          waitUntil: "domcontentloaded",
-          timeout: 30000,
-        },
-      );
+  console.log(`procesando pagina`);
+  try {
+    await page.goto(`https://animeav1.com/catalogo?search=gintama`, {
+      waitUntil: "domcontentloaded",
+      timeout: 30000,
+    });
 
-      await page.waitForSelector("article.group\\/item", { timeout: 10000 });
+    await page.waitForSelector("article.group\\/item", { timeout: 10000 });
 
-      const animes = await page.evaluate(() => {
-        const items = document.querySelectorAll("article.group\\/item");
+    const animes = await page.evaluate(() => {
+      const items = document.querySelectorAll("article.group\\/item");
 
-        return Array.from(items).map((i) => {
-          return {
-            title: i.querySelector("h3")?.textContent?.trim(),
-            link: i.querySelector('a[href^="/media/"]')?.getAttribute("href"),
-            img: i.querySelector("img")?.getAttribute("src"),
-            type: i.querySelector(".text-subs")?.textContent?.trim(),
-            sinopsis: i.querySelector("p.line-clamp-6")?.textContent?.trim(),
-          };
-        });
+      return Array.from(items).map((i) => {
+        return {
+          title: i.querySelector("h3")?.textContent?.trim(),
+          link: i.querySelector('a[href^="/media/"]')?.getAttribute("href"),
+          img: i.querySelector("img")?.getAttribute("src"),
+          type: i.querySelector(".text-subs")?.textContent?.trim(),
+          sinopsis: i.querySelector("p.line-clamp-6")?.textContent?.trim(),
+        };
       });
+    });
 
-      animesData.push(...animes);
-      console.log(`pagina ${i} completada, (+${animes.length} animes)`);
-    } catch (e: any) {
-      console.error(
-        `Ha habido un error al extraer la informacion en la pagina ${i}, continunado con la siguiente`,
-        e,
-      );
-      continue;
-    }
-    const delay = Math.floor(Math.random() * 5000) + 3000;
-    await new Promise((r) => setTimeout(r, delay));
+    animesData.push(...animes);
+    console.log(`pagina completada, (+${animes.length} animes)`);
+  } catch (e: any) {
+    console.error(
+      `Ha habido un error al extraer la informacion en la pagina , continunado con la siguiente`,
+      e,
+    );
   }
+  const delay = Math.floor(Math.random() * 5000) + 3000;
+  await new Promise((r) => setTimeout(r, delay));
 
   console.log(
     "tu objeto tiene esta cantidad de animes" + " " + animesData.length,

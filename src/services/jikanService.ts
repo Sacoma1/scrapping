@@ -1,6 +1,8 @@
-import { JikanResponse } from "../../interfaces.js";
+import { AnimeDataProcessed, JikanResponse } from "../../interfaces.js";
 
-export const apiData = async (index: string | undefined) => {
+export const apiData = async (
+  index: string | undefined,
+): Promise<AnimeDataProcessed> => {
   try {
     const res = await fetch(`https://api.jikan.moe/v4/anime?q=${index}`, {
       headers: {
@@ -16,21 +18,24 @@ export const apiData = async (index: string | undefined) => {
       console.error(`No se encontro informacion para: ${index}`);
       throw new Error("Anime no encontrado en jikan");
     }
+    const anime = data.data[0];
 
-    const genres = data.data[0]?.genres.map((g) => g.name);
-    const status = data.data[0]?.status;
-    const year = data.data[0]?.year || "N/A";
-    const score = data.data[0]?.score;
-    const broadcast = data.data[0]?.broadcast?.string || "N/A";
-    const episodes = data.data[0]?.episodes || 0;
-
+    // Aplanamos aquí mismo
+    const genres = anime.genres.map((g) => g.name).join(", ");
+    const status = anime.status;
+    const year = anime.year || "N/A";
+    const score = anime.score || null;
+    const broadcast = anime.broadcast?.string || "N/A";
+    const episodes = anime.episodes || 0;
+    const title = anime.title || "";
     return {
-      genres: genres.join(","),
+      genres: genres,
       status: status,
       year: year,
       score: score,
       broadcast: broadcast,
       episodes: episodes,
+      title: title,
     };
   } catch (e: any) {
     console.error("no se pudo cargar la infomacion de la api de Jikan", e);

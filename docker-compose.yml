@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+  scraper-bot:
+    build: .
+    container_name: utaha_scraper_container
+    # Esto le pasa tu .env (Telegram API, DB URL) al contenedor
+    env_file:
+      - .env
+    # Muy importante para que Chrome no se trabe (memoria compartida)
+    shm_size: "2gb"
+    # Si el contenedor falla, Docker intentará reiniciarlo solo
+    restart: "no"
