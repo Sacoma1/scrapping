@@ -12,9 +12,7 @@ export interface JikanAnime {
   status: string;
   year?: number;
   score?: number;
-  broadcast?: {
-    string: string;
-  };
+  broadcast?: any;
   link?: string;
   sinopsis: string;
   type: string;
@@ -51,6 +49,7 @@ export interface anime {
 export interface animeWithMissingEpisodes {
   title: string;
   link: string;
+  status: string | null;
 }
 
 export interface ScrappedMissingAnimeEpisodes {
@@ -58,6 +57,7 @@ export interface ScrappedMissingAnimeEpisodes {
   link: string;
   episodes: number | null;
   id?: number | 0;
+  status: string | null;
 }
 
 export interface UpdateAnime {

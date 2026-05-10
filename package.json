@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "update:airing": "tsx src/scripts/updateAnimeEpisodes",
-    "start": "npx prisma generate && src/scripts/updateAnimeEpisodes.js"
+    "start": "npx prisma generate && src/scripts/updateAnimeEpisodes.js",
+    "start:new-animes": "tsx src/scripts/index.ts"
   },
   "keywords": [],
   "author": "",

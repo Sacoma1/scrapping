@@ -1,5 +1,4 @@
 import { prisma } from "../../prisma/db.js";
-import { processAnime } from "../services/animeOrchestator.js";
 import { Bot } from "grammy";
 import "dotenv/config";
 import { ScrappedMissingAnimeEpisodes } from "../../interfaces.js";
@@ -29,7 +28,21 @@ const updateAiringAnimes = async () => {
 
     const updatedEpisodes: ScrappedMissingAnimeEpisodes[] =
       await findEpisodes(animesOnAir);
+
     for (let episode of updatedEpisodes) {
+      const realStatus = episode.status;
+      const currenNumber = episode.episodes || 0;
+      const title = episode.title;
+      const targetStatus =
+        episode.status === "En emisión"
+          ? "Currently Airing"
+          : "Finished Airing";
+
+      await bot.api.sendMessage(
+        process.env.TELEGRAM_CHAT_ID || "",
+        `Comenzando con la actualizacion de ${episode.title}, con la cantidad de episodios de ${episode.episodes}, status: ${episode.status} `,
+      );
+
       try {
         const existingEpisode = await prisma.episode.findFirst({
           where: {
@@ -39,6 +52,7 @@ const updateAiringAnimes = async () => {
             },
           },
         });
+        console.log(existingEpisode);
 
         if (existingEpisode) {
           console.log(
@@ -52,21 +66,23 @@ const updateAiringAnimes = async () => {
           episode.link,
           episode.episodes,
         );
+        console.log(`Extrayendo token de ${title}, episodio: ${currenNumber}`);
 
         if (chatId) {
           await bot.api.sendMessage(
             process.env.TELEGRAM_CHAT_ID || "",
-            `comenzando extraccion de tokens de capitulos  `,
+            `comenzando extraccion de token de ${episode.title}, capitulo: ${episode.episodes}`,
           );
         }
 
         await prisma.animes.update({
           where: { link: episode.link },
           data: {
-            episodes: episode.episodes,
+            episodes: currenNumber,
+            status: targetStatus,
             totalEpisodes: {
               create: {
-                number: episode.episodes || 0,
+                number: currenNumber,
                 videoToken: extractedToken,
               },
             },
@@ -80,7 +96,7 @@ const updateAiringAnimes = async () => {
         }
       } catch (e: any) {
         console.error(
-          `Hubo un problema al actualizar los capitulos de este anime ${episode.title}`,
+          `Hubo un problema al actualizar los capitulos de este anime ${title}, ${e}`,
         );
       }
     }

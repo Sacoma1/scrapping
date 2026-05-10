@@ -21,15 +21,16 @@ export const apiData = async (
     const anime = data.data[0];
 
     // Aplanamos aquí mismo
-    const genres = anime.genres.map((g) => g.name).join(", ");
+    const genres = anime.genres.map((g) => g.name);
     const status = anime.status;
-    const year = anime.year || "N/A";
+    const year = anime.year || 0;
     const score = anime.score || null;
-    const broadcast = anime.broadcast?.string || "N/A";
+    const broadcast = anime.broadcast || "N/A";
     const episodes = anime.episodes || 0;
     const title = anime.title || "";
+
     return {
-      genres: genres,
+      genres: genres.join(" ,") || "",
       status: status,
       year: year,
       score: score,

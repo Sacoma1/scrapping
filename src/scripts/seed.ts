@@ -35,10 +35,9 @@ export const animeToDb = async (animeArray: JikanAnime[]) => {
           anime.title.toLowerCase().includes(animeTitle.title.toLowerCase());
 
         let updatedData;
+
         if (isMatch) {
           updatedData = { ...anime, ...animeTitle };
-          genres: animeTitle.genres;
-          broadcast: animeTitle.broadcast;
         } else {
           console.log(
             ` Discordancia: API dice "${animeTitle.title}" pero buscamos "${anime.title}"`,

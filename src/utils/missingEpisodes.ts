@@ -31,7 +31,7 @@ export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
   // const animesWithNoEpisodes = await prisma.animes.findMany({
   //   where: { episodes: 0 },
   // });
-  for (let anime of animeArray) {
+  for (let anime of animeArray.slice(0, 10)) {
     index++;
     try {
       await page.goto(`https://animeav1.com/media/${anime.link}`, {
@@ -46,23 +46,36 @@ export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
         const episode = document.querySelectorAll(
           ".group\\/item.text-body.relative",
         );
+        const statusElement = document.querySelector(
+          ".flex.flex-wrap.items-center.gap-2.text-sm span:last-child",
+        );
+        const statusText = statusElement
+          ? statusElement.textContent
+          : "Desconocido";
         return Array.from(episode).map((e) => {
           return {
             episodes: e
               .querySelector('a[href^="/media/"]')
               ?.getAttribute("href"),
+            status: statusText.trim(),
           };
         });
       });
-      console.log(`Agregando episodios para ${anime.title}`);
+      console.log(
+        `Agregando nuevo episodio para: ${anime.title}, status: ${anime.status}`,
+      );
 
       const numberOfEpisodes = {
         title: anime.title,
         episodes: episodes.length,
         link: anime.link,
+        status: anime.status,
       };
 
       episodesData.push(numberOfEpisodes);
+      // console.log(
+      //   `anime: ${numberOfEpisodes.title} status: ${numberOfEpisodes.status}, episodes: ${numberOfEpisodes.episodes}`,
+      // );
     } catch (e: any) {
       console.error("Error extrayendo los episodios", e);
     }
