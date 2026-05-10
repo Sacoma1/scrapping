@@ -64,7 +64,7 @@ const updateAiringAnimes = async () => {
         if (chatId) {
           await bot.api.sendMessage(
             process.env.TELEGRAM_CHAT_ID || "",
-            `El episodios ${episode.episodes} del anime ${episode.title}`,
+            `El episodios ${episode.episodes} del anime ${episode.title} ya existe en la db`,
           );
         }
 
