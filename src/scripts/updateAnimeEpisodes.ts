@@ -61,6 +61,13 @@ const updateAiringAnimes = async () => {
           continue;
         }
 
+        if (chatId) {
+          await bot.api.sendMessage(
+            process.env.TELEGRAM_CHAT_ID || "",
+            `El episodios ${episode.episodes} del anime ${episode.title}`,
+          );
+        }
+
         console.log("Comenzando extraccion de token");
         const extractedToken = await tokeExtractor(
           episode.link,
