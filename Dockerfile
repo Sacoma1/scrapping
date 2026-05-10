@@ -18,7 +18,7 @@ RUN npm install
 COPY . .
 
 # 7. Generamos el cliente de Prisma para que pueda hablar con TiDB
-RUN npx prisma generate
+RUN DATABASE_URL="mysql://user:pass@localhost:3306/db" npx prisma generate
 # 8. Saltamos el sandbox de Chrome (necesario para Linux/Docker)
 # ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 # ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
