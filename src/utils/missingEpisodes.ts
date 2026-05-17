@@ -31,7 +31,7 @@ export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
   // const animesWithNoEpisodes = await prisma.animes.findMany({
   //   where: { episodes: 0 },
   // });
-  for (let anime of animeArray) {
+  for (let anime of animeArray.slice(0, 3)) {
     index++;
     try {
       await page.goto(`https://animeav1.com/media/${anime.link}`, {
@@ -69,13 +69,13 @@ export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
         title: anime.title,
         episodes: episodes.length,
         link: anime.link,
-        status: anime.status,
+        status: episodes.length > 0 ? episodes[0].status : "Desconocido",
       };
 
       episodesData.push(numberOfEpisodes);
-      // console.log(
-      //   `anime: ${numberOfEpisodes.title} status: ${numberOfEpisodes.status}, episodes: ${numberOfEpisodes.episodes}`,
-      // );
+      console.log(
+        `anime: ${numberOfEpisodes.title} status: ${numberOfEpisodes.status}, episodes: ${numberOfEpisodes.episodes}`,
+      );
     } catch (e: any) {
       console.error("Error extrayendo los episodios", e);
     }

@@ -58,6 +58,19 @@ const updateAiringAnimes = async () => {
           console.log(
             `El episodio ${episode.episodes} del anime ${episode.title} ya existe en la base de datos`,
           );
+          const currentDbAnime = animesOnAir.find(
+            (a) => a.link === episode.link,
+          );
+
+          if (currentDbAnime && currentDbAnime.status !== targetStatus) {
+            console.log(
+              `Se detecto un cambio de estado en ${title} de ${currentDbAnime.status} a ${targetStatus}`,
+            );
+            await prisma.animes.update({
+              where: { link: episode.link },
+              data: { status: targetStatus },
+            });
+          }
           continue;
         }
 
