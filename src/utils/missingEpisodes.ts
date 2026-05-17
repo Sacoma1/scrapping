@@ -31,7 +31,7 @@ export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
   // const animesWithNoEpisodes = await prisma.animes.findMany({
   //   where: { episodes: 0 },
   // });
-  for (let anime of animeArray.slice(0, 3)) {
+  for (let anime of animeArray) {
     index++;
     try {
       await page.goto(`https://animeav1.com/media/${anime.link}`, {
