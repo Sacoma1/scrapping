@@ -10,6 +10,7 @@ export async function openWebPage(): Promise<void> {
   console.log("iniciando navegador...");
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: "/usr/bin/chromium",
 
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });

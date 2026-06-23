@@ -9,6 +9,7 @@ export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
   console.log("iniciando navegador...");
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: "/usr/bin/chromium",
 
     args: [
       "--no-sandbox",

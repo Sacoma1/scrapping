@@ -5,6 +5,7 @@ export const tokeExtractor = async (anime: string, episode: number | null) => {
   console.log("Iniciando el navegador...");
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: "usr/bin/chromium",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
