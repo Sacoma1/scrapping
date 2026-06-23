@@ -2,6 +2,7 @@ import puppeteer from "puppeteer";
 
 import { animeToDb } from "./seed.js";
 import { newAnimetoDB } from "./newAnimes.js";
+import { prisma } from "../../prisma/db.js";
 
 //funcion para agregar anime bajo demanda que no se encuntren en la db
 
@@ -35,24 +36,28 @@ export async function openWebPage(): Promise<void> {
         },
       );
 
-      await page.waitForSelector("article.group\\/item", { timeout: 10000 });
+      const waitForselector = await page.$("article.group\\/item");
 
-      const animes = await page.evaluate(() => {
-        const items = document.querySelectorAll("article.group\\/item");
+      if (!waitForselector) {
+        break;
+      } else {
+        const animes = await page.evaluate(() => {
+          const items = document.querySelectorAll("article.group\\/item");
 
-        return Array.from(items).map((i) => {
-          return {
-            title: i.querySelector("h3")?.textContent?.trim(),
-            link: i.querySelector('a[href^="/media/"]')?.getAttribute("href"),
-            img: i.querySelector("img")?.getAttribute("src"),
-            type: i.querySelector(".text-subs")?.textContent?.trim(),
-            sinopsis: i.querySelector("p.line-clamp-6")?.textContent?.trim(),
-          };
+          return Array.from(items).map((i) => {
+            return {
+              title: i.querySelector("h3")?.textContent?.trim(),
+              link: i.querySelector('a[href^="/media/"]')?.getAttribute("href"),
+              img: i.querySelector("img")?.getAttribute("src"),
+              type: i.querySelector(".text-subs")?.textContent?.trim(),
+              sinopsis: i.querySelector("p.line-clamp-6")?.textContent?.trim(),
+            };
+          });
         });
-      });
 
-      animesData.push(...animes);
-      console.log(`pagina completada con exito, (+${animes.length} animes)`);
+        animesData.push(...animes);
+        console.log(`pagina completada con exito, (+${animes.length} animes)`);
+      }
     } catch (e: any) {
       console.error(
         `Ha habido un error al extraer la informacion en la pagina ${i}, continunado con la siguiente`,
@@ -74,6 +79,9 @@ export async function openWebPage(): Promise<void> {
   await page.close();
   console.log("cerrando navegador");
   await browser.close();
+  console.log("Desconectando db...");
+  await prisma.$disconnect();
+  process.exit(0);
 }
 
 openWebPage();

@@ -3,7 +3,7 @@ import { JikanAnime, ScrappedMissingAnimeEpisodes } from "../../interfaces.js";
 import { prisma } from "../../prisma/db.js";
 import { apiData } from "../services/jikanService.js";
 import { animeClearedUrl } from "../utils/clearLink.js";
-import { findEpisodes } from "../utils/missingEpisodes.js";
+
 import { tokeExtractor } from "./tokenExtractor.js";
 
 export const newAnimetoDB = async (animeArray: JikanAnime[]) => {
@@ -90,6 +90,8 @@ export const newAnimetoDB = async (animeArray: JikanAnime[]) => {
       console.log(
         `Extrayendo primer episodio ${newAnime.title}, ${initialEpisode}`,
       );
-    } catch (e: any) {}
+    } catch (e: any) {
+      console.error("error al registrar anime", e);
+    }
   }
 };
