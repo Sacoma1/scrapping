@@ -10,9 +10,21 @@ export async function openWebPage(): Promise<void> {
   console.log("iniciando navegador...");
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: execSync("which chromium").toString().trim(),
-
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    // Usamos la ruta estándar de Nixpacks en Railway
+    executablePath:
+      process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--single-process",
+      "--no-zygote",
+      "--disable-gpu",
+      "--hide-scrollbars",
+      "--disable-extensions",
+      "--disable-infobars",
+      "--disable-background-networking",
+    ],
   });
   const page = await browser.newPage();
 
