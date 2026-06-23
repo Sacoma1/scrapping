@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "npx puppeteer browsers install chrome",
     "update:airing": "tsx src/scripts/updateAnimeEpisodes",
     "start": "npx prisma generate && src/scripts/updateAnimeEpisodes.js",
     "start:new-animes": "tsx src/scripts/index.ts"
