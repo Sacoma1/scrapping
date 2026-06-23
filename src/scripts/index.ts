@@ -4,15 +4,18 @@ import { animeToDb } from "./seed.js";
 import { newAnimetoDB } from "./newAnimes.js";
 import { prisma } from "../../prisma/db.js";
 
-//funcion para agregar anime bajo demanda que no se encuntren en la db
+const chromePath = execSync(
+  'find /home/pptruser/.cache/puppeteer -name "chrome-headless-shell" -executable -type f | head -n 1',
+)
+  .toString()
+  .trim();
 
 export async function openWebPage(): Promise<void> {
   console.log("iniciando navegador...");
   const browser = await puppeteer.launch({
     headless: true,
     // Usamos la ruta estándar de Nixpacks en Railway
-    executablePath:
-      process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
+    executablePath: chromePath,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",

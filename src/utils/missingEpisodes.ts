@@ -4,13 +4,19 @@ import { animeWithMissingEpisodes, JikanAnime } from "../../interfaces.js";
 
 import { execSync } from "child_process";
 
+const chromePath = execSync(
+  'find /home/pptruser/.cache/puppeteer -name "chrome-headless-shell" -executable -type f | head -n 1',
+)
+  .toString()
+  .trim();
+
 export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
   let index = 0;
   let episodesData: any[] = [];
   console.log("iniciando navegador...");
   const browser = await puppeteer.launch({
     headless: true,
-    // Ya no adivinamos, confiamos en la variable de entorno del Dockerfile
+    executablePath: chromePath,
 
     args: [
       "--no-sandbox",

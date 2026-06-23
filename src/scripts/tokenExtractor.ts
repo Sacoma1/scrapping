@@ -1,12 +1,18 @@
 import puppeteer from "puppeteer";
 import { execSync } from "child_process";
 
+const chromePath = execSync(
+  'find /home/pptruser/.cache/puppeteer -name "chrome-headless-shell" -executable -type f | head -n 1',
+)
+  .toString()
+  .trim();
+
 export const tokeExtractor = async (anime: string, episode: number | null) => {
   let extractedToken = "";
   console.log("Iniciando el navegador...");
   const browser = await puppeteer.launch({
     headless: true,
-    // Ya no adivinamos, confiamos en la variable de entorno del Dockerfile
+    executablePath: chromePath,
 
     args: [
       "--no-sandbox",
