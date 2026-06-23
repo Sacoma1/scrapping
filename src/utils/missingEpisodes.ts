@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
 import { prisma } from "../../prisma/db.js";
 import { animeWithMissingEpisodes, JikanAnime } from "../../interfaces.js";
 
