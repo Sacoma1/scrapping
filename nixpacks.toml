@@ -2,4 +2,8 @@
 node = {}
 
 [phases.setup]
-nixPkgs = ["...", "chromium"]
+nixPkgs = ["...", "chromium", "glib", "nss", "nspr", "atk", "at-spi2-atk", "cups", "libdrm", "dbus", "xcb-util", "libxkbcommon"]
+
+[env]
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
+PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium"
