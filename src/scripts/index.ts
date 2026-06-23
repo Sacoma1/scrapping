@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer-core";
-
+import { execSync } from "child_process";
 import { animeToDb } from "./seed.js";
 import { newAnimetoDB } from "./newAnimes.js";
 import { prisma } from "../../prisma/db.js";
@@ -10,8 +10,7 @@ export async function openWebPage(): Promise<void> {
   console.log("iniciando navegador...");
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath:
-      process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
+    executablePath: execSync("which chromium").toString().trim(),
 
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });

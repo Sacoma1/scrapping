@@ -1,12 +1,12 @@
 import puppeteer from "puppeteer-core";
+import { execSync } from "child_process";
 
 export const tokeExtractor = async (anime: string, episode: number | null) => {
   let extractedToken = "";
   console.log("Iniciando el navegador...");
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath:
-      process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
+    executablePath: execSync("which chromium").toString().trim(),
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
