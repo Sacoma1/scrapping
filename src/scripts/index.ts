@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer-core";
+import puppeteer from "puppeteer";
 import { execSync } from "child_process";
 import { animeToDb } from "./seed.js";
 import { newAnimetoDB } from "./newAnimes.js";
@@ -10,16 +10,22 @@ export async function openWebPage(): Promise<void> {
   console.log("iniciando navegador...");
   const browser = await puppeteer.launch({
     headless: true,
-    // Ya no adivinamos, confiamos en la variable de entorno del Dockerfile
-
+    // Usamos la ruta estándar de Nixpacks en Railway
+    executablePath:
+      process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
+      "--single-process",
+      "--no-zygote",
       "--disable-gpu",
+      "--hide-scrollbars",
+      "--disable-extensions",
+      "--disable-infobars",
+      "--disable-background-networking",
     ],
   });
-
   const page = await browser.newPage();
 
   await page.setUserAgent(
