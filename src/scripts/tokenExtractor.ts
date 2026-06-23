@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
 
 export const tokeExtractor = async (anime: string, episode: number | null) => {
   let extractedToken = "";
