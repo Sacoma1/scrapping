@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer-core";
+import puppeteer from "puppeteer";
 import { execSync } from "child_process";
 
 export const tokeExtractor = async (anime: string, episode: number | null) => {

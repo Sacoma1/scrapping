@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer-core";
+import puppeteer from "puppeteer";
 import { execSync } from "child_process";
 import { animeToDb } from "./seed.js";
 import { newAnimetoDB } from "./newAnimes.js";
