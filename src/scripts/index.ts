@@ -11,7 +11,7 @@ export async function openWebPage(): Promise<void> {
   const browser = await puppeteer.launch({
     headless: true,
     // Ya no adivinamos, confiamos en la variable de entorno del Dockerfile
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
