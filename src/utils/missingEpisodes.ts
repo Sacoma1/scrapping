@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
 import { prisma } from "../../prisma/db.js";
 import { animeWithMissingEpisodes, JikanAnime } from "../../interfaces.js";
 import { link } from "node:fs";
@@ -9,7 +9,8 @@ export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
   console.log("iniciando navegador...");
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: "/usr/bin/chromium",
+    executablePath:
+      process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
 
     args: [
       "--no-sandbox",
