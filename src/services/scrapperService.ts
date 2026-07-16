@@ -102,8 +102,11 @@ export const tokeExtractor = async (anime: string, episode: number) => {
     console.log(`Navegando a ${animeUrl}`);
 
     await page.goto(animeUrl, { waitUntil: "load", timeout: 30000 });
-
-    await new Promise((r) => setTimeout(r, 7000));
+    let sec = 0;
+    while (!extractedToken && sec < 15) {
+      await new Promise((r) => setTimeout(r, 3000));
+      sec++;
+    }
   } catch (error: any) {
     console.error(`> Error de navegación en ${anime}:`, error.message);
   } finally {

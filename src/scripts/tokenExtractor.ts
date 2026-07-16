@@ -28,7 +28,7 @@ export const tokeExtractor = async (anime: string, episode: number | null) => {
   await page.setViewport({ width: 1920, height: 1080 });
 
   const animeUrl = `https://animeav1.com/media/${anime}/${episode}`;
-
+  console.log("---------------------------------------------");
   page.on("request", (req) => {
     const url = req.url();
     if (url.includes("/m3u8/")) {
@@ -37,6 +37,7 @@ export const tokeExtractor = async (anime: string, episode: number | null) => {
       if (token && token.length === 32) {
         extractedToken = token;
         console.log(`¡Token capturado!: ${extractedToken}`);
+        console.log("-----------------------------------------");
       }
     }
   });

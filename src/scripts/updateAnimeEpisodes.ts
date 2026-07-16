@@ -1,134 +1,201 @@
 import { prisma } from "../../prisma/db.js";
 import { Bot } from "grammy";
 import "dotenv/config";
-import { ScrappedMissingAnimeEpisodes } from "../../interfaces.js";
+import {
+  Anime,
+  animeWithMissingEpisodes,
+  ScrappedMissingAnimeEpisodes,
+} from "../../interfaces.js";
 import { findEpisodes } from "../utils/missingEpisodes.js";
 import { tokeExtractor } from "./tokenExtractor.js";
+import { createEpisodes } from "../utils/createEpisodes.js";
 
 const updateAiringAnimes = async () => {
-  console.log(" Iniciando actualización de animes en emisión...");
-
   const bot = new Bot(process.env.TELEGRAM_API || "");
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const chatId = process.env.TELEGRAM_CHAT_ID; // Corregido el typo 'chtatId' -> 'chatId'
 
-  try {
-    //
-    const animesOnAir = await prisma.animes.findMany({
-      where: { status: "Currently Airing" },
-    });
-    console.log(
-      "Se encontraron: " + "" + animesOnAir.length + " Animes para actulizar",
+  const animesOnAir = await prisma.animes.findMany({
+    where: { OR: [{ status: "Currently Airing" }, { status: "En emisión" }] },
+  });
+
+  if (chatId) {
+    await bot.api.sendMessage(
+      process.env.TELEGRAM_CHAT_ID || "",
+      `Se encontraron ${animesOnAir.length} animes para actualizar sus capitulos `,
     );
-    if (chatId) {
-      await bot.api.sendMessage(
-        process.env.TELEGRAM_CHAT_ID || "",
-        `Se encontraron ${animesOnAir.length} animes para actualizar `,
-      );
-    }
+  }
 
-    const updatedEpisodes: ScrappedMissingAnimeEpisodes[] =
-      await findEpisodes(animesOnAir);
+  const animeWeb = await findEpisodes(animesOnAir);
 
-    for (let episode of updatedEpisodes) {
-      const realStatus = episode.status;
-      const currenNumber = episode.episodes || 0;
-      const title = episode.title;
-      const targetStatus =
-        episode.status === "En emisión"
-          ? "Currently Airing"
-          : "Finished Airing";
-
-      await bot.api.sendMessage(
-        process.env.TELEGRAM_CHAT_ID || "",
-        `Comenzando con la actualizacion de ${episode.title}, con la cantidad de episodios de ${episode.episodes}, status: ${episode.status} `,
+  for (let animes of animesOnAir) {
+    try {
+      const webData: Anime = animeWeb.find(
+        (a: animeWithMissingEpisodes) => a.link === animes.link,
       );
 
-      try {
-        const existingEpisode = await prisma.episode.findFirst({
-          where: {
-            number: episode.episodes || 0,
-            anime: {
-              link: episode.link,
-            },
-          },
-        });
-        console.log(existingEpisode);
+      if (!webData) {
+        console.log(`error en el anime: ${animes.title}`);
+        continue;
+      }
 
-        if (existingEpisode) {
-          console.log(
-            `El episodio ${episode.episodes} del anime ${episode.title} ya existe en la base de datos`,
-          );
-          const currentDbAnime = animesOnAir.find(
-            (a) => a.link === episode.link,
-          );
-
-          if (currentDbAnime && currentDbAnime.status !== targetStatus) {
-            console.log(
-              `Se detecto un cambio de estado en ${title} de ${currentDbAnime.status} a ${targetStatus}`,
-            );
-            await prisma.animes.update({
-              where: { link: episode.link },
-              data: { status: targetStatus },
-            });
-          }
-          continue;
-        }
-
-        if (chatId) {
-          await bot.api.sendMessage(
-            process.env.TELEGRAM_CHAT_ID || "",
-            `El episodios ${episode.episodes} del anime ${episode.title} ya existe en la db`,
-          );
-        }
-
-        console.log("Comenzando extraccion de token");
-        const extractedToken = await tokeExtractor(
-          episode.link,
-          episode.episodes,
+      if ((webData.episodes ?? 1) > (animes.episodes ?? 1)) {
+        console.log(
+          `Actualizando anime: ${animes.title} actualmente cuenta con ${webData.episodes} pero tiene registrados ${animes.episodes}`,
         );
-        console.log(`Extrayendo token de ${title}, episodio: ${currenNumber}`);
 
         if (chatId) {
           await bot.api.sendMessage(
             process.env.TELEGRAM_CHAT_ID || "",
-            `comenzando extraccion de token de ${episode.title}, capitulo: ${episode.episodes}`,
+            `Actualizando anime: ${animes.title} actualmente cuenta con ${webData.episodes} pero tiene registrados ${animes.episodes}`,
           );
         }
+
+        // MOVIDO AQUÍ: El bot avisa ANTES de empezar la tarea pesada
+        if (chatId) {
+          await bot.api.sendMessage(
+            process.env.TELEGRAM_CHAT_ID || "",
+            `Comenzando con la extraccion de tokens para ${animes.title}`,
+          );
+        }
+
+        // const statusChange =
+        //   webData.status != "En emisión"
+        //     ? `El status del anime: ${animes.title} ha cambiado a: ${webData.status}`
+        //     : `Status de ${animes.title} sigue igual: ${animes.status}`;
+
+        const updatedEpisodes = await createEpisodes(
+          webData.episodes ?? 0,
+          webData.link ?? "",
+        );
+
+        const lastEpisode = updatedEpisodes.slice(animes.episodes ?? 0);
 
         await prisma.animes.update({
-          where: { link: episode.link },
+          where: { link: animes.link },
           data: {
-            episodes: currenNumber,
-            status: targetStatus,
-            totalEpisodes: {
-              create: {
-                number: currenNumber,
-                videoToken: extractedToken,
-              },
-            },
+            episodes: webData.episodes,
+            status: webData.status,
+            totalEpisodes: { create: lastEpisode },
           },
         });
-        if (chatId) {
-          await bot.api.sendMessage(
-            process.env.TELEGRAM_CHAT_ID || "",
-            `Se han actualizado  ${animesOnAir.length} animes`,
-          );
-        }
-      } catch (e: any) {
-        console.error(
-          `Hubo un problema al actualizar los capitulos de este anime ${title}, ${e}`,
-        );
       }
-    }
-  } catch (e: any) {
-    console.error(" Error en el cron de actualización:", e);
-    if (chatId)
-      console.log(
-        bot.api.sendMessage(chatId, `Error en el scrapper: ${e.message}`),
+    } catch (e: any) {
+      console.error(
+        `Ha habido un problema para actualizar este Anime: ${animes.title}, ${e}`,
       );
-  } finally {
-    await prisma.$disconnect();
+    }
   }
 };
-
+//   console.log(" Iniciando actualización de animes en emisión...");
+//   const bot = new Bot(process.env.TELEGRAM_API || "");
+//   const chatId = process.env.TELEGRAM_CHAT_ID;
+//   try {
+//     //
+//     const animesOnAir = await prisma.animes.findMany({
+//       where: { status: "Currently Airing" },
+//     });
+//     console.log(
+//       "Se encontraron: " + "" + animesOnAir.length + " Animes para actulizar",
+//     );
+//     if (chatId) {
+//       await bot.api.sendMessage(
+//         process.env.TELEGRAM_CHAT_ID || "",
+//         `Se encontraron ${animesOnAir.length} animes para actualizar `,
+//       );
+//     }
+//     const updatedEpisodes: ScrappedMissingAnimeEpisodes[] =
+//       await findEpisodes(animesOnAir);
+//     for (let episode of updatedEpisodes) {
+//       const realStatus = episode.status;
+//       const currenNumber = episode.episodes || 0;
+//       const title = episode.title;
+//       const targetStatus =
+//         episode.status === "En emisión"
+//           ? "Currently Airing"
+//           : "Finished Airing";
+//       await bot.api.sendMessage(
+//         process.env.TELEGRAM_CHAT_ID || "",
+//         `Comenzando con la actualizacion de ${episode.title}, con la cantidad de episodios de ${episode.episodes}, status: ${episode.status} `,
+//       );
+//       try {
+//         const existingEpisode = await prisma.episode.findFirst({
+//           where: {
+//             number: episode.episodes || 0,
+//             anime: {
+//               link: episode.link,
+//             },
+//           },
+//         });
+//         console.log(existingEpisode);
+//         if (existingEpisode) {
+//           console.log(
+//             `El episodio ${episode.episodes} del anime ${episode.title} ya existe en la base de datos`,
+//           );
+//           const currentDbAnime = animesOnAir.find(
+//             (a) => a.link === episode.link,
+//           );
+//           if (currentDbAnime && currentDbAnime.status !== targetStatus) {
+//             console.log(
+//               `Se detecto un cambio de estado en ${title} de ${currentDbAnime.status} a ${targetStatus}`,
+//             );
+//             await prisma.animes.update({
+//               where: { link: episode.link },
+//               data: { status: targetStatus },
+//             });
+//           }
+//           continue;
+//         }
+//         if (chatId) {
+//           await bot.api.sendMessage(
+//             process.env.TELEGRAM_CHAT_ID || "",
+//             `El episodios ${episode.episodes} del anime ${episode.title} ya existe en la db`,
+//           );
+//         }
+//         console.log("Comenzando extraccion de token");
+//         const extractedToken = await tokeExtractor(
+//           episode.link,
+//           episode.episodes,
+//         );
+//         console.log(`Extrayendo token de ${title}, episodio: ${currenNumber}`);
+//         if (chatId) {
+//           await bot.api.sendMessage(
+//             process.env.TELEGRAM_CHAT_ID || "",
+//             `comenzando extraccion de token de ${episode.title}, capitulo: ${episode.episodes}`,
+//           );
+//         }
+//         await prisma.animes.update({
+//           where: { link: episode.link },
+//           data: {
+//             episodes: currenNumber,
+//             status: targetStatus,
+//             totalEpisodes: {
+//               create: {
+//                 number: currenNumber,
+//                 videoToken: extractedToken,
+//               },
+//             },
+//           },
+//         });
+//         if (chatId) {
+//           await bot.api.sendMessage(
+//             process.env.TELEGRAM_CHAT_ID || "",
+//             `Se han actualizado  ${animesOnAir.length} animes`,
+//           );
+//         }
+//       } catch (e: any) {
+//         console.error(
+//           `Hubo un problema al actualizar los capitulos de este anime ${title}, ${e}`,
+//         );
+//       }
+//     }
+//   } catch (e: any) {
+//     console.error(" Error en el cron de actualización:", e);
+//     if (chatId)
+//       console.log(
+//         bot.api.sendMessage(chatId, `Error en el scrapper: ${e.message}`),
+//       );
+//   } finally {
+//     await prisma.$disconnect();
+//   }
+// };
 updateAiringAnimes();

@@ -3,6 +3,7 @@ import { execSync } from "child_process";
 import { animeToDb } from "./seed.js";
 import { newAnimetoDB } from "./newAnimes.js";
 import { prisma } from "../../prisma/db.js";
+import { findEpisodes } from "../utils/missingEpisodes.js";
 
 const chromePath = execSync(
   'find /home/pptruser/.cache/puppeteer -name "chrome-headless-shell" -executable -type f | head -n 1',
@@ -88,7 +89,10 @@ export async function openWebPage(): Promise<void> {
   );
 
   try {
-    await newAnimetoDB(animesData);
+    console.log("Creando episodios...");
+    const completeAnimeData = await findEpisodes(animesData);
+
+    await newAnimetoDB(completeAnimeData);
   } catch (e: any) {
     console.error("No se pude agregar anime a la db ");
   }

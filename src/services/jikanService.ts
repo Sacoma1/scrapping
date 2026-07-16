@@ -20,7 +20,6 @@ export const apiData = async (
     }
     const anime = data.data[0];
 
-    // Aplanamos aquí mismo
     const genres = anime.genres.map((g) => g.name);
     const status = anime.status;
     const year = anime.year || 0;

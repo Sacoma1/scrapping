@@ -1,8 +1,8 @@
 import puppeteer from "puppeteer";
-import { prisma } from "../../prisma/db.js";
-import { animeWithMissingEpisodes, JikanAnime } from "../../interfaces.js";
+import { animeWithMissingEpisodes } from "../../interfaces.js";
 
 import { execSync } from "child_process";
+import { animeClearedUrl } from "./clearLink.js";
 
 const chromePath = execSync(
   'find /home/pptruser/.cache/puppeteer -name "chrome-headless-shell" -executable -type f | head -n 1',
@@ -37,10 +37,12 @@ export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
   // const animesWithNoEpisodes = await prisma.animes.findMany({
   //   where: { episodes: 0 },
   // });
+
   for (let anime of animeArray) {
+    let cleanUrl = animeClearedUrl(anime.link);
     index++;
     try {
-      await page.goto(`https://animeav1.com/media/${anime.link}`, {
+      await page.goto(`https://animeav1.com/media/${cleanUrl}`, {
         waitUntil: "networkidle2",
         timeout: 30000,
       });
@@ -67,12 +69,10 @@ export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
           };
         });
       });
-      console.log(
-        `Agregando nuevo episodio para: ${anime.title}, status: ${anime.status}`,
-      );
 
       const numberOfEpisodes = {
-        title: anime.title,
+        ...anime,
+
         episodes: episodes.length,
         link: anime.link,
         status: episodes.length > 0 ? episodes[0].status : "Desconocido",
@@ -80,14 +80,16 @@ export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
 
       episodesData.push(numberOfEpisodes);
       console.log(
-        `anime: ${numberOfEpisodes.title} status: ${numberOfEpisodes.status}, episodes: ${numberOfEpisodes.episodes}`,
+        `anime #${index}: ${numberOfEpisodes.title} status: ${numberOfEpisodes.status}, episodes: ${numberOfEpisodes.episodes}`,
       );
+      console.log(numberOfEpisodes);
     } catch (e: any) {
       console.error("Error extrayendo los episodios", e);
     }
     const delay = Math.floor(Math.random() * 5000) + 3000;
     await new Promise((r) => setTimeout(r, delay));
   }
+
   await browser.close();
   return episodesData;
 };

@@ -30,7 +30,7 @@ export interface AnimeLink {
   episodes: number | null;
 }
 
-export interface anime {
+export interface Anime {
   title: string;
   genres: string;
   img: string;
