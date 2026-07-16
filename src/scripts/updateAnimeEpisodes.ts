@@ -83,6 +83,9 @@ const updateAiringAnimes = async () => {
       console.error(
         `Ha habido un problema para actualizar este Anime: ${animes.title}, ${e}`,
       );
+    } finally {
+      console.log("Desconectando base de datos y cerrando scraper...");
+      await prisma.$disconnect();
     }
   }
 };

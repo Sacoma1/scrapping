@@ -44,7 +44,7 @@ export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
     try {
       await page.goto(`https://animeav1.com/media/${cleanUrl}`, {
         waitUntil: "networkidle2",
-        timeout: 30000,
+        timeout: 45000,
       });
 
       await page.waitForSelector(".group\\/item.text-body.relative", {
