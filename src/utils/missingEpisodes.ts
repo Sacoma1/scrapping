@@ -74,7 +74,7 @@ export const findEpisodes = async (animeArray: animeWithMissingEpisodes[]) => {
         ...anime,
 
         episodes: episodes.length,
-        link: anime.link,
+        link: cleanUrl,
         status: episodes.length > 0 ? episodes[0].status : "Desconocido",
       };
 
