@@ -83,11 +83,10 @@ const updateAiringAnimes = async () => {
       console.error(
         `Ha habido un problema para actualizar este Anime: ${animes.title}, ${e}`,
       );
-    } finally {
-      console.log("Desconectando base de datos y cerrando scraper...");
-      await prisma.$disconnect();
     }
   }
+  console.log("Desconectando DB... ");
+  await prisma.$disconnect();
 };
 //   console.log(" Iniciando actualización de animes en emisión...");
 //   const bot = new Bot(process.env.TELEGRAM_API || "");
