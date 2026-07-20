@@ -12,7 +12,7 @@ import { createEpisodes } from "../utils/createEpisodes.js";
 
 const updateAiringAnimes = async () => {
   const bot = new Bot(process.env.TELEGRAM_API || "");
-  const chatId = process.env.TELEGRAM_CHAT_ID; // Corregido el typo 'chtatId' -> 'chatId'
+  const chatId = process.env.TELEGRAM_CHAT_ID;
 
   const animesOnAir = await prisma.animes.findMany({
     where: { OR: [{ status: "Currently Airing" }, { status: "En emisión" }] },
@@ -21,7 +21,7 @@ const updateAiringAnimes = async () => {
   if (chatId) {
     await bot.api.sendMessage(
       process.env.TELEGRAM_CHAT_ID || "",
-      `Se encontraron ${animesOnAir.length} animes para actualizar sus capitulos `,
+      `Se encontraron ${animesOnAir.length} animes, intentando actualizar... `,
     );
   }
 
@@ -40,17 +40,16 @@ const updateAiringAnimes = async () => {
 
       if ((webData.episodes ?? 1) > (animes.episodes ?? 1)) {
         console.log(
-          `Actualizando anime: ${animes.title} actualmente cuenta con ${webData.episodes} pero tiene registrados ${animes.episodes}`,
+          `Actualizando anime: ${animes.title} actualmente cuenta con ${webData.episodes} episodios, pero tiene registrados ${animes.episodes} episodios`,
         );
 
         if (chatId) {
           await bot.api.sendMessage(
             process.env.TELEGRAM_CHAT_ID || "",
-            `Actualizando anime: ${animes.title} actualmente cuenta con ${webData.episodes} pero tiene registrados ${animes.episodes}`,
+            `Actualizando anime: ${animes.title} actualmente cuenta con ${webData.episodes} episodios, pero tiene registrados ${animes.episodes} episodios`,
           );
         }
 
-        // MOVIDO AQUÍ: El bot avisa ANTES de empezar la tarea pesada
         if (chatId) {
           await bot.api.sendMessage(
             process.env.TELEGRAM_CHAT_ID || "",
